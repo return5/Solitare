@@ -266,37 +266,39 @@ int getXIndex(const int x) {
 		case 108 ... 121: return 2;
 		case 122 ... 135: return 3;	
 		case 136 ... 149: return 4;
-		default: return 0; //didnt select either card nor discard piles defaults to 0
+		default: return -1; //didnt select either card nor discard piles defaults to -1
 	}
 }
 
 //sets selected card to what user clicks on, provided it is a valid choice
 void setSelected(const int x, const int y, int *const card_selected) {
-	int const x_index = getXIndex(x); 	//get x index form x cordinates of where user clicked
-	const int bottom = columns[x_index]->bottom;	 //index for bottom of stack
-	if(x < 80 && bottom >= 0) { 	//user clicks on column of cards and it isnt empty
-		const int bottom_offset = columns[x_index]->bottom * 4;	 //top of card on bottom of column
-		if(y >= bottom_offset && y < bottom_offset + 7) { 	//if user clicks on card at bottom of column
-			if(columns[x_index]->stack[bottom]->show == NO) {	 //if bottom card isnt showing face
-				columns[x_index]->stack[bottom]->show = YES; 	//flip it over to show face
-				printColumn(columns[x_index]);
+	int const x_index = getXIndex(x); 	//get x index from x cordinates of where user clicked
+	if (x_index != -1) {
+		const int bottom = columns[x_index]->bottom;	 //index for bottom of stack
+		if(x < 80 && bottom >= 0) { 	//user clicks on column of cards and it isnt empty
+			const int bottom_offset = columns[x_index]->bottom * 4;	 //top of card on bottom of column
+			if(y >= bottom_offset && y < bottom_offset + 7) { 	//if user clicks on card at bottom of column
+				if(columns[x_index]->stack[bottom]->show == NO) {	 //if bottom card isnt showing face
+					columns[x_index]->stack[bottom]->show = YES; 	//flip it over to show face
+					printColumn(columns[x_index]);
+				}
+				else { 	//otherwise set Slected to bottom card
+				Selected = columns[x_index]->stack[bottom];
+				*card_selected = 1;
+				}
 			}
-			else { 	//otherwise set Slected to bottom card
-			Selected = columns[x_index]->stack[bottom];
-			*card_selected = 1;
+			else if (y  <= bottom_offset) { 	//if user clicks on card not on bottom of stack
+				checkColumnOfCards(columns[x_index],(y-1)/4,card_selected);
 			}
 		}
-		else if (y  <= bottom_offset) { 	//if user clicks on card not on bottom of stack
-			checkColumnOfCards(columns[x_index],(y-1)/4,card_selected);
-		}
-	}
-	else if(y > 13 && y < 24) {	
-		if(x > 93 && x < 103) { 	//user clicks on draw pile
-			nextDrawCard();
-		}
-		else if (x > 104 && x < 114) { 	//user clicks on draw card
-			Selected = current_card;
-			*card_selected = 1;
+		else if(y > 13 && y < 24) {	
+			if(x > 93 && x < 103) { 	//user clicks on draw pile
+				nextDrawCard();
+			}
+			else if (x > 104 && x < 114) { 	//user clicks on draw card
+				Selected = current_card;
+				*card_selected = 1;
+			}
 		}
 	}
 }
@@ -308,7 +310,7 @@ void selectCard(const int x, const int y,int *const card_selected) {
 	}
 	else { //if user already has selected card, then try to move selected card to where user then selects
 		const int x_index = getXIndex(x);
-		if(x < 80) { //user clicked on column of cards
+		if(x < 80 && x_index != -1) { //user clicked on column of cards
 			if (Selected == current_card) { //if selected card is in draw pile
 			   	moveFromDrawPile(columns[x_index],-1,x_index);
 			}
