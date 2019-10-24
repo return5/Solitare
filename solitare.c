@@ -49,7 +49,6 @@ void selectCard(const int x, const int y,int *const card_selected);
 void gameLoop(void);
 void gameWon(void); 
 void newGame(void); 
-void resetUsed(void); 
 void deleteWin(void); 
 void freeMemory(void); 
 char *getFace(const int value);
@@ -57,6 +56,7 @@ int checkIfUsed(const int index);
 int getCardIndex(void);
 void initDrawPile(void);
 void initDeck(void);
+void initUsed(void);
 void initColumns(void);
 void initDiscardPiles(void);
 void initColors(void);
@@ -71,7 +71,6 @@ static Card *draw_pile;  //linked list holds draw pile
 static Card *current_card;  //holds card currently face up in draw pile
 static Card *Selected; //card which user currently has selected
 static int used[52]; //array to hold index values. used when randomly putting cards onto columns
-static int used_index = 0; //index to above array
 static WINDOW *deck_win; //window for displaying deck of cards to choose from
 static const size_t SIZE_CARD = sizeof(Card); //size of Card struct
 static const size_t SIZE_COLUMN = sizeof(Column); //size of column struct
@@ -375,18 +374,9 @@ void gameWon(void) {
 void newGame(void) {
 	deleteWin();
 	freeMemory();
-	resetUsed();
 	initGame();
 	play_game = 1;
 	gameLoop();
-}
-
-//reset used index array
-void resetUsed(void) {
-	used_index = 0; //reset this back to zero
-	for(int i = 0; i < 52; i++) {
-		used[i] = -1; //negative number isnt a valid index value, so this will work
-	}
 }
 
 //free up memeory allocated by malloc before starting new game.
@@ -433,29 +423,23 @@ char *getFace(const int value){
 		case 12: return "Q";
 		case 13: return "K";
 		default: return "0";
- }
-}
-
-//checks if index hs already been used to get card from deck array
-int checkIfUsed(const int index) {
-	for(int i = 0; i < used_index; i++) {
-		if(index == used[i]){
-			return -1;
-		}
 	}
-	return index;
 }
 
 //finds unused random index for deck array and returns it
 int getCardIndex(void) {
 	int index;
-	//cehck a random number between 0 and 51. -1 means number has already been used
-	while((index = checkIfUsed(rand() % 52)) == -1) {
-		//loop through till find an unused index
-	}
-	//store index inside used array so that it doesnt get used a second time
-	used[used_index++] = index;
+	do {
+		index = rand() % 52; //random number between 0 and 51
+	} while(used[index] != 0); //if number has already been used, check a new number
+	used[index] = 1;
 	return index;
+}
+
+void initUsed(void) {
+	for(int i = 0; i < 52; i++) {
+		used[i] = 0;
+	}
 }
 
 //make draw pile from remaing cards
@@ -463,7 +447,7 @@ void initDrawPile(void) {
 	deck_win = newwin(11,23,14,94);
    	draw_pile = deck[getCardIndex()];
 	Card *temp = draw_pile;
-	while(used_index < 52) {
+	for(int i = 0; i < 23; i++) {
 	   temp->next = deck[getCardIndex()];
 	   temp = temp->next;
 	}
@@ -540,6 +524,7 @@ void initScreen(void) {
 }
 
 void initGame(void) {
+	initUsed();
 	initDeck();
 	initColumns();
 	initDrawPile();
