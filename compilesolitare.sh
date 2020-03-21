@@ -14,12 +14,10 @@ printHelp() {
     printf "-help  --help   prints this page then exits\n"
 }
 
-#checks if GCC is installed, and if so it compiles the game with given flags.  if not installed then gives error message and exits.
+#use GCC to compile the game
 useGCC() {
-    (gcc -v >/dev/null 2>&1 && 
-    printf "using GCC\n" &&
-    gcc solitare.c -orogueclone -Wall -Wextra -O2  -finline-functions -Wswitch-enum -lncurses -std=gnu11 -osolitare ) ||
-    printf "error, gcc seems to not be installed.\n"
+    printf "using GCC\n"
+    gcc solitare.c -orogueclone -Wall -Wextra -O2  -finline-functions -Wswitch-enum -lncurses -std=gnu11 -osolitare 
 }
 
 #compiles game using Clang
@@ -29,17 +27,20 @@ useClang() {
 }
 
 main() {
-    case "$1" in
-        -help | --help)
-            printHelp && exit
+    case "$1" in                #check argument of positional parameter 1
+        -help | --help)         #if argument passed to script is the help flag
+            printHelp && exit   #run the help function then exit
             ;;
-        -c | --clang)
-            (clang -v >/dev/null 2>&1 && useClang) || (printf "falling back to GCC.\n" && useGCC)
+        -c | --clang)           #if argument passed is the clang flag
+            #check if clang is installed, if it is, call the useClang function, other wise fallback to GCC
+            (clang -v >/dev/null 2>&1 && useClang) || (printf "falling back to GCC.\n" && (gcc -v >/dev/null 2>&1 && useGCC) || printf "error, make sure GCC is installed.\n")   
             ;;
         *)
-            useGCC
+            #checks to see if gcc is installed, and if so call useGCC, otherwise print error
+            (gcc -v >/dev/null 2>&1 && useGCC) || printf "error, make sure GCC is installed.\n"
             ;;
     esac
 }
 
+#call main function and pass it positonal paramter 1
 main "$1"
